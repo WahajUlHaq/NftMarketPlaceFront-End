@@ -21,9 +21,12 @@ export default function Header(props) {
 
   return (
     <div className={classes.root}>
-      <AppBar  sx={{
-    backgroundColor: "gray"
-  }} position="static">
+      <AppBar
+        sx={{
+          backgroundColor: "gray",
+        }}
+        position="static"
+      >
         <Toolbar>
           <Typography variant="h6" className={classes.title}>
             {pageName}

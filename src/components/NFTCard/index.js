@@ -7,21 +7,20 @@ import CardContent from "@material-ui/core/CardContent";
 import CardMedia from "@material-ui/core/CardMedia";
 import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
-import { createMuiTheme, formatMs, MuiThemeProvider } from "@material-ui/core";
+import { createMuiTheme, MuiThemeProvider } from "@material-ui/core";
 import { useSelector } from "react-redux";
 
 export default function CardComp(props) {
   const classes = useStyles();
   const user = useSelector((state) => state.user);
   const {
-    isBuyScreen,
     onBuyClick,
     itemName,
     itemDescription,
     token,
     itemImage,
     onSellClick,
-    // itemPrice
+    itemPrice,
     itemUserId,
     isAvailableForSale,
     onWithdrawClick,
@@ -37,9 +36,11 @@ export default function CardComp(props) {
               <Typography gutterBottom variant="h5" component="h2">
                 {itemName}
               </Typography>
-              {/* <Typography gutterBottom variant="h5" component="h3">
-                {itemPrice}
-              </Typography> */}
+              {itemPrice && (
+                <Typography gutterBottom variant="h5" component="h2">
+                  {itemPrice} Wei
+                </Typography>
+              )}
               <Typography
                 className={classes.description}
                 variant="body2"
@@ -86,7 +87,7 @@ const useStyles = makeStyles({
     display: "flex",
   },
   cont: {
-    height: 400,
+    height: 470,
     width: 300,
     marginTop: 30,
     marginRight: 30,
@@ -95,14 +96,14 @@ const useStyles = makeStyles({
       transform: "translateY(-12px)",
     },
   },
-  media: {
+  media: { 
     height: 200,
   },
   marginTop10: {
     marginTop: 10,
   },
   description: {
-    height: 80,
+    height: 100,
     width: 280,
     overflowY: "auto",
   },

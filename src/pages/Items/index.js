@@ -6,7 +6,7 @@ import api from "../../api";
 import CardComp from "../../components/NFTCard";
 import Header from "../../components/Header";
 import SellNFTModel from "../../components/SellNFTModel";
-import OutlinedInput from "../../components/OutlinedInput";
+import ProgressLoader from "../../components/ProgressLoader";
 
 const Items = (props) => {
   const classes = useStyles();
@@ -16,6 +16,7 @@ const Items = (props) => {
   const [isModelOpen, setModelOpen] = useState(false);
   const [selectedNFT, setSelectedNFT] = useState([]);
   const [nftAmount, setNftAmount] = useState();
+  const [loader, setLoader] = useState(false);
 
   useEffect(() => {
     fetchItems();
@@ -27,45 +28,56 @@ const Items = (props) => {
 
   const fetchItems = async () => {
     try {
+      setLoader(true);
+
       const query = {
         userId: user.user._id,
       };
       const response = await api.getMyItem(query);
 
       setData(response);
+      setLoader(false);
     } catch (e) {
       alert(e);
+      setLoader(false);
     }
   };
 
   const handleSaveBtnChange = async () => {
     try {
+      setLoader(true);
+
       if (!validator()) {
         throw new Error("Please fill all field");
       }
 
       selectedNFT.isAvailableForSale = true;
-
-      const response = await api.editItem(selectedNFT);
+      await api.editItem(selectedNFT);
 
       closeModel();
       alert("Updated Success");
       await fetchItems();
+      setLoader(false);
     } catch (e) {
       alert(e);
+      setLoader(false);
     }
   };
 
   const handleWithdrawClick = async (item) => {
     try {
-      item.isAvailableForSale = false;
+      setLoader(true);
 
-      const response = await api.editItem(item);
+      item.isAvailableForSale = false;
+      
+      await api.editItem(item);
+      await fetchItems();
 
       alert("Updated Success");
-      await fetchItems();
+      setLoader(false);
     } catch (e) {
       alert(e);
+      setLoader(false);
     }
   };
 
@@ -118,6 +130,16 @@ const Items = (props) => {
           />
         ))}
       </div>
+      {!data.length && (
+        <div className={classes.noContent}>
+          <p>Opps! No Items to display now</p>
+        </div>
+      )}
+      {loader && (
+        <div className={classes.loader}>
+          <ProgressLoader />
+        </div>
+      )}
     </div>
   );
 };
@@ -132,6 +154,18 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
     flexDirection: "row",
     flexWrap: "wrap",
+  },
+  loader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 20,
+  },
+  noContent: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 20,
   },
 }));
 

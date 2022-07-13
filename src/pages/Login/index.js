@@ -1,15 +1,17 @@
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { makeStyles } from "@material-ui/core/styles";
+import { useState } from "react";
 
-import {
-  getAccount,
-  web3Initializer,
-} from "../../helpers/metamaskWalletConnector";
 import userWalletActions from "../../redux/user/action";
 import api from "../../api";
 import ButtonComp from "../../components/Button";
 import Header from "../../components/Header";
+import {
+  getAccount,
+  web3Initializer,
+} from "../../helpers/metamaskWalletConnector";
+import ProgressLoader from "../../components/ProgressLoader";
 
 const Login = (props) => {
   const dispatch = useDispatch();
@@ -17,9 +19,13 @@ const Login = (props) => {
   const classes = useStyles();
   const navigate = useNavigate();
 
+  const [loader, setLoader] = useState(false);
+
   const onLoginClickHandler = async () => {
     try {
+      setLoader(true);
       await web3Initializer();
+
       const userWalletId = await getAccount();
       const userAccount = await checkForUser(userWalletId);
 
@@ -28,10 +34,11 @@ const Login = (props) => {
       }
 
       dispatch(setUser(userAccount));
-
+      setLoader(false);
       navigate("home");
     } catch (e) {
-      console.log(e);
+      alert(e)
+      setLoader(false);
     }
   };
 
@@ -44,7 +51,7 @@ const Login = (props) => {
 
       return response;
     } catch (e) {
-      console.log(e);
+      alert(e)
     }
   };
 
@@ -61,6 +68,11 @@ const Login = (props) => {
           Connect Your Account
         </ButtonComp>
       </div>
+      {loader && (
+        <div className={classes.loader}>
+          <ProgressLoader />
+        </div>
+      )}
     </div>
   );
 };
@@ -71,11 +83,17 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
     flexDirection: "column",
   },
-  btnComp:{
+  btnComp: {
     display: "flex",
-    justifyContent: 'center',
-    marginTop: 20
-  }
+    justifyContent: "center",
+    marginTop: 20,
+  },
+  loader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 20,
+  },
 }));
 
 export default Login;

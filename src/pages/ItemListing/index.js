@@ -5,11 +5,14 @@ import { useSelector } from "react-redux";
 import api from "../../api";
 import CardComp from "../../components/NFTCard";
 import Header from "../../components/Header";
+import ProgressLoader from "../../components/ProgressLoader";
 
 const ItemsLisiting = (props) => {
   const classes = useStyles();
   const user = useSelector((state) => state.user);
+
   const [data, setData] = useState([]);
+  const [loader, setLoader] = useState(false);
 
   useEffect(() => {
     fetchItems();
@@ -17,37 +20,50 @@ const ItemsLisiting = (props) => {
 
   const fetchItems = async () => {
     try {
+      setLoader(true);
+
       const response = await api.getItemsForSale();
-      console.log(response);
+
       setData(response);
+      setLoader(false);
     } catch (e) {
       alert(e);
+      setLoader(false);
     }
   };
 
   const onWithdrawClick = async (item) => {
     try {
+      setLoader(true);
+
       item.isAvailableForSale = false;
 
-      const response = await api.editItem(item);
+      await api.editItem(item);
+      await fetchItems();
 
       alert("Withdrawn Success");
-      await fetchItems();
+      setLoader(false);
     } catch (e) {
       alert(e);
+      setLoader(false);
     }
   };
 
   const onBuyClick = async (item) => {
     try {
+      setLoader(true);
+
       item.userId = user.user._id;
       item.isAvailableForSale = false;
 
-      const response = await api.editItem(item);
-      alert("Buy Success");
+      await api.editItem(item);
       await fetchItems();
+
+      alert("Buy Success");
+      setLoader(false);
     } catch (e) {
       alert(e);
+      setLoader(false);
     }
   };
 
@@ -59,7 +75,7 @@ const ItemsLisiting = (props) => {
           <CardComp
             itemName={item.itemName}
             itemDescription={item.itemDescription}
-            // itemPrice={item.itemPrice}
+            itemPrice={item.itemPrice}
             token={item.token}
             itemImage={item.itemImage}
             onBuyClick={(e) => onBuyClick(item)}
@@ -69,6 +85,16 @@ const ItemsLisiting = (props) => {
           />
         ))}
       </div>
+      {!data.length && (
+        <div className={classes.noContent}>
+          <p>Opps! No Items to display now</p>
+        </div>
+      )}
+      {loader && (
+        <div className={classes.loader}>
+          <ProgressLoader />
+        </div>
+      )}
     </div>
   );
 };
@@ -83,6 +109,18 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
     flexDirection: "row",
     flexWrap: "wrap",
+  },
+  loader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 20,
+  },
+  noContent: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 20,
   },
 }));
 

@@ -28,7 +28,7 @@ api.getItemsForSale = function (body) {
 
 api.getMyItem = function (body) {
   const url = `${process.env.REACT_APP_API_BASE_URL}/item/my/get/all`;
-  console.log(body)
+
   return axios.get(url, body);
 };
 
