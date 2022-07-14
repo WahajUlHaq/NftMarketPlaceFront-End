@@ -1,13 +1,15 @@
-import React, { useState } from "react";
+import React from "react";
 import Button from "@material-ui/core/Button";
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
+import { makeStyles } from "@material-ui/core/styles";
 
 import OutlinedInput from "../OutlinedInput";
 
 export default function ModelComp(props) {
+  const classes = useStyles();
   const {
     isOpen,
     handleModelClose,
@@ -24,11 +26,12 @@ export default function ModelComp(props) {
         aria-describedby="alert-dialog-description"
       >
         <DialogTitle id="alert-dialog-title">{title}</DialogTitle>
-        <DialogContent></DialogContent>
-        <OutlinedInput
-          onChange={(e) => handleInputChange(e, "nftAmount")}
-          label={"Please enter NFT Amount:"}
-        />
+        <div className={classes.inputContainer}>
+          <OutlinedInput
+            onChange={(e) => handleInputChange(e, "nftAmount")}
+            label={"NFT Amount in WEI:"}
+          />
+        </div>
         <DialogActions>
           <Button onClick={handleModelClose} color="primary">
             Close
@@ -41,3 +44,9 @@ export default function ModelComp(props) {
     </div>
   );
 }
+
+const useStyles = makeStyles({
+  inputContainer: {
+    padding: 30,
+  },
+});

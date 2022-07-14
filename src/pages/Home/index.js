@@ -6,47 +6,43 @@ import { useNavigate } from "react-router-dom";
 import UploadButton from "../../components/UploadInput";
 import OutlinedInput from "../../components/OutlinedInput";
 import Button from "../../components/Button";
-import {
-  addImageToIPFSServer,
-  addObjectToIPFSServer,
-} from "../../helpers/IPFS";
 import web3Object from "../../web3/web3";
 import NFTMinterContractABI from "../../contractABI/NFTMinterABI.json";
 import api from "../../api";
 import Header from "../../components/Header";
+import ProgressLoader from "../../components/ProgressLoader";
+import {
+  addImageToIPFSServer,
+  addObjectToIPFSServer,
+} from "../../helpers/IPFS";
 
 const Home = (props) => {
   const classes = useStyles();
   const navigate = useNavigate();
   const user = useSelector((state) => state.user);
+
   const [data, setData] = useState("");
   const [ipfsHashedObject, setIPFSHashedObject] = useState("");
-
-  const handleFileChange = (e) => {
-    setData({
-      ...data,
-      file: e.target.files[0],
-    });
-  };
-
-  const handleTextChange = (e, label) => {
-    setData({
-      ...data,
-      [label]: e.target.value,
-    });
-  };
+  const [loader, setLoader] = useState(false);
 
   const submit = async () => {
     try {
+      setLoader(true);
+
       if (!validator()) {
         throw new Error("Please fill all fields");
       }
 
       await addImageToIPFS();
+      await saveItemToDb(); // after success make it go one line down
       const response = await sendReqToNFTMinterContract();
-      console.log(response);
+
+      setLoader(false);
+
+      console.log("Nft Minter Contract Create Response=> ", response); //remove console
     } catch (e) {
       alert(e);
+      setLoader(false);
     }
   };
 
@@ -75,6 +71,7 @@ const Home = (props) => {
       addObjectToIPFS(response.Hash);
     } catch (e) {
       alert(e);
+      setLoader(false);
     }
   };
 
@@ -86,13 +83,11 @@ const Home = (props) => {
       delete objectOfData.file;
 
       const response = await addObjectToIPFSServer(objectOfData);
-      
-      setIPFSHashedObject(response.Hash);
-      await saveItemToDb();
 
-      console.log(response.Hash);
+      setIPFSHashedObject(response.Hash);
     } catch (e) {
       alert(e);
+      setLoader(false);
     }
   };
 
@@ -110,10 +105,9 @@ const Home = (props) => {
       if (!response) {
         throw new Error("Api error");
       }
-
-      console.log(response.imageHash);
     } catch (e) {
       alert(e);
+      setLoader(false);
     }
   };
 
@@ -124,14 +118,29 @@ const Home = (props) => {
         NFTMinterContractABI,
         process.env.REACT_APP_NFT_MINTER_CONTRACT
       );
-      const create = await NFTMinterContract.methods
+      const response = await NFTMinterContract.methods
         .createItem(ipfsHashedObject, 0)
         .send({ from: user.user.userWalletId });
 
-      console.log(create);
+      return response;
     } catch (e) {
       alert(e.message);
+      setLoader(false);
     }
+  };
+
+  const handleFileChange = (e) => {
+    setData({
+      ...data,
+      file: e.target.files[0],
+    });
+  };
+
+  const handleTextChange = (e, label) => {
+    setData({
+      ...data,
+      [label]: e.target.value,
+    });
   };
 
   return (
@@ -178,6 +187,11 @@ const Home = (props) => {
           </div>
         </div>
       </div>
+      {loader && (
+        <div className={classes.loader}>
+          <ProgressLoader />
+        </div>
+      )}
     </div>
   );
 };
@@ -210,6 +224,12 @@ const useStyles = makeStyles((theme) => ({
   },
   btn: {
     marginRight: 30,
+    marginTop: 20,
+  },
+  loader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
     marginTop: 20,
   },
 }));
