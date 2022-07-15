@@ -22,7 +22,6 @@ const Home = (props) => {
   const user = useSelector((state) => state.user);
 
   const [data, setData] = useState("");
-  const [ipfsHashedObject, setIPFSHashedObject] = useState("");
   const [loader, setLoader] = useState(false);
 
   const submit = async () => {
@@ -30,18 +29,27 @@ const Home = (props) => {
       setLoader(true);
 
       if (!validator()) {
-        throw new Error("Please fill all fields");
+        throw new Error("Please fill all required fields in correct format");
       }
 
-      await addImageToIPFS();
-      await saveItemToDb(); // after success make it go one line down
-      const response = await sendReqToNFTMinterContract();
+      const objectHash = await addImageToIPFS();
+      const response = await sendReqToNFTMinterContract(objectHash);
 
+      if (!response) {
+        throw new Error(
+          "Error while minting NFT, Please try again! See logs for more detailed error."
+        );
+      }
+
+      const tokenId = response.events.Transfer.returnValues.tokenId;
+      const tokenAddress = response.events.Transfer.address;
+
+      await saveItemToDb(tokenId, tokenAddress, objectHash);
+      alert("NFT Minted Successfully.");
       setLoader(false);
-
-      console.log("Nft Minter Contract Create Response=> ", response); //remove console
+      navigate("/my-items");
     } catch (e) {
-      alert(e);
+      alert(e.message);
       setLoader(false);
     }
   };
@@ -68,9 +76,10 @@ const Home = (props) => {
         ...data,
         imageHash: response.Hash,
       });
-      addObjectToIPFS(response.Hash);
+      return addObjectToIPFS(response.Hash);
     } catch (e) {
-      alert(e);
+      console.log("Error while adding image to IPFS:=>", e.message);
+
       setLoader(false);
     }
   };
@@ -84,21 +93,24 @@ const Home = (props) => {
 
       const response = await addObjectToIPFSServer(objectOfData);
 
-      setIPFSHashedObject(response.Hash);
+      return response.Hash;
     } catch (e) {
-      alert(e);
+      console.log("Error while adding object to IPFS:=>", e.message);
+
       setLoader(false);
     }
   };
 
-  const saveItemToDb = async () => {
+  const saveItemToDb = async (tokenId, tokenAddress, objectHash) => {
     try {
       const payload = {
         userId: user.user._id,
-        token: data.imageHash,
+        tokenId: tokenId,
+        tokenAddress: tokenAddress,
         itemName: data.title,
         itemDescription: data.description,
         itemImage: "https://ipfs.io/ipfs/" + data.imageHash,
+        itemObjectHashed: objectHash,
       };
       const response = await api.addItem(payload);
 
@@ -106,12 +118,13 @@ const Home = (props) => {
         throw new Error("Api error");
       }
     } catch (e) {
-      alert(e);
+      console.log("Error while saving items details to database:=>", e.message);
+
       setLoader(false);
     }
   };
 
-  const sendReqToNFTMinterContract = async () => {
+  const sendReqToNFTMinterContract = async (objectHash) => {
     try {
       const web3 = web3Object;
       const NFTMinterContract = new web3.web3.eth.Contract(
@@ -119,7 +132,7 @@ const Home = (props) => {
         process.env.REACT_APP_NFT_MINTER_CONTRACT
       );
       const response = await NFTMinterContract.methods
-        .createItem(ipfsHashedObject, 0)
+        .createItem(objectHash)
         .send({ from: user.user.userWalletId });
 
       return response;
@@ -146,7 +159,7 @@ const Home = (props) => {
   return (
     <div className={classes.main}>
       <div>
-        <Header pageName={"Home"} />
+        <Header pageName={"Mint NFT"} />
       </div>
       <div className={classes.container}>
         <div>
@@ -170,20 +183,6 @@ const Home = (props) => {
           </div>
           <div className={classes.btn}>
             <Button Lable={"Submit"} onClick={(e) => submit()} />
-          </div>
-        </div>
-        <div className={classes.btnContainer}>
-          <div className={classes.btn}>
-            <Button
-              Lable={"Check My NFT'S"}
-              onClick={(e) => navigate("/my-items")}
-            />
-          </div>
-          <div className={classes.btn}>
-            <Button
-              Lable={"Buy NFT'S"}
-              onClick={(e) => navigate("/items-for-sale")}
-            />
           </div>
         </div>
       </div>
