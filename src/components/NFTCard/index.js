@@ -38,7 +38,7 @@ export default function CardComp(props) {
               </Typography>
               {itemPrice && (
                 <Typography gutterBottom variant="h5" component="h2">
-                  {itemPrice} Wei
+                  {itemPrice / 1000000000000000000} ETH
                 </Typography>
               )}
               <Typography
@@ -66,7 +66,7 @@ export default function CardComp(props) {
             )}
             {itemUserId === user.user._id && isAvailableForSale && (
               <Button onClick={onWithdrawClick} size="small" color="primary">
-                Withdraw
+                Remove From Market
               </Button>
             )}
             {itemUserId !== user.user._id && isAvailableForSale && (
@@ -96,7 +96,7 @@ const useStyles = makeStyles({
       transform: "translateY(-12px)",
     },
   },
-  media: { 
+  media: {
     height: 200,
   },
   marginTop10: {

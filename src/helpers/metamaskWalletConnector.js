@@ -12,7 +12,7 @@ export const web3Initializer = async () => {
       web3.web3 = new Web3(window.ethereum);
     }
   } catch (e) {
-    alert(e.message);
+    console.log("Web-3 Initialization Failed=>", e.message)
   }
 };
 
@@ -32,6 +32,6 @@ export const getAccount = async () => {
       return accountDetails[0];
     }
   } catch (e) {
-    alert(e.message);
+    console.log("Metamask account fetching is un-successfull=>", e.message)
   }
 };
