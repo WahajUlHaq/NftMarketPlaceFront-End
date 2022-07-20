@@ -20,6 +20,7 @@ const Items = (props) => {
   const [isModelOpen, setModelOpen] = useState(false);
   const [selectedNFT, setSelectedNFT] = useState([]);
   const [nftAmount, setNftAmount] = useState();
+  const [nftStatus, setNFTStatus] = useState("");
   const [loader, setLoader] = useState(false);
 
   useEffect(() => {
@@ -97,22 +98,18 @@ const Items = (props) => {
         marketPlaceABI,
         process.env.REACT_APP_MARKETPLACE_CONTRACT
       );
-      const bidItem = false;
       const response = await marketPlaceContract.methods
         .addItemToMarket(
           selectedNFT.tokenId,
           selectedNFT.tokenAddress,
           selectedNFT.itemPrice,
-          bidItem,
+          nftStatus,
           process.env.REACT_APP_WALLET_TOKEN_ADDRESS
         )
         .send({ from: user.user.userWalletId });
 
       selectedNFT.marketPlaceId = response.events.ItemAdded.returnValues.id;
-      console.log(
-        "response.events.ItemAdded.returnValues.id",
-        response.events.ItemAdded.returnValues.id
-      );
+      selectedNFT.isAuction = nftStatus;
 
       const editResponse = await api.editItem(selectedNFT);
 
@@ -171,6 +168,7 @@ const Items = (props) => {
       item.isAvailableForSale = false;
       item.marketPlaceId = null;
       item.itemPrice = 0;
+      item.highestBid = 0;
 
       if (!response) {
         throw new Error("Error while removing item from Marketplace.");
@@ -216,6 +214,61 @@ const Items = (props) => {
   const handleInputChange = async (e) => {
     setNftAmount(e.target.value);
   };
+  const handleSelectChange = async (e) => {
+    setNFTStatus(e.target.value);
+  };
+
+  const endAuctionClick = async (item) => {
+    try {
+      setLoader(true);
+      const web3 = web3Object;
+      const marketPlaceContract = new web3.web3.eth.Contract(
+        marketPlaceABI,
+        process.env.REACT_APP_MARKETPLACE_CONTRACT
+      );
+      const response = await marketPlaceContract.methods
+        .EndAuction(parseInt(item.marketPlaceId))
+        .send({ from: user.user.userWalletId });
+
+      if (!response) {
+        throw new Error("Error while ending auction from Marketplace.");
+      }
+
+      const highestBidParam = {
+        userId: item.userId,
+        itemId: item._id,
+        auctionId: item.auctionId,
+      };
+      const highestBidUser = await api.highetsBid(highestBidParam);
+
+      item.userId = highestBidUser.userId;
+      item.isAvailableForSale = false;
+      item.itemPrice = 0;
+      item.highestBid = 0;
+      item.isAuction = false;
+
+      const editResponse = await api.editItem(item);
+
+      if (!editResponse) {
+        throw new Error("Unable to update item in Database.");
+      }
+
+      const editAuctionIdResponse = await api.editAuctionId(item);
+
+      if (!editAuctionIdResponse) {
+        throw new Error("Unable to update item in Database.");
+      }
+
+      await fetchItems();
+      alert("Removd from auction ");
+      setLoader(false);
+    } catch (e) {
+      console.log(e.message);
+
+      alert("Error while ending auction");
+      setLoader(false);
+    }
+  };
 
   return (
     <div className={classes.main}>
@@ -223,6 +276,8 @@ const Items = (props) => {
       <SellNFTModel
         isOpen={isModelOpen}
         title={"NFT Details"}
+        selectValue={nftStatus}
+        handleDropDownChange={(e) => handleSelectChange(e)}
         handleModelClose={closeModel}
         handleInputChange={(e) => handleInputChange(e)}
         handleSaveBtnChange={handleSaveBtnChange}
@@ -233,12 +288,15 @@ const Items = (props) => {
             itemName={item.itemName}
             itemDescription={item.itemDescription}
             token={item.token}
+            isItemForAuction={item.isAuction}
             itemImage={item.itemImage}
             onSellClick={(e) => openModel(item)}
             isBuyScreen={false}
             itemUserId={item.userId}
+            onEndAuction={(e) => endAuctionClick(item)}
             isAvailableForSale={item.isAvailableForSale}
             onWithdrawClick={(e) => handleWithdrawClick(item)}
+            highestBid={item.highestBid}  
           />
         ))}
       </div>
