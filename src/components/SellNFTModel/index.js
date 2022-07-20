@@ -6,6 +6,7 @@ import DialogTitle from "@material-ui/core/DialogTitle";
 import { makeStyles } from "@material-ui/core/styles";
 
 import OutlinedInput from "../OutlinedInput";
+import SelectInput from "../Dropdown";
 
 export default function ModelComp(props) {
   const classes = useStyles();
@@ -14,8 +15,14 @@ export default function ModelComp(props) {
     handleModelClose,
     title,
     handleInputChange,
+    handleDropDownChange,
     handleSaveBtnChange,
+    selectValue,
   } = props;
+  const data = [
+    { value: true, name: "Yes" },
+    { value: false, name: "No" },
+  ];
 
   return (
     <div>
@@ -29,6 +36,12 @@ export default function ModelComp(props) {
           <OutlinedInput
             onChange={(e) => handleInputChange(e, "nftAmount")}
             label={"NFT Amount in ETH:"}
+          />
+          <SelectInput
+            label={"Is item available for auction"}
+            value={selectValue}
+            data={data}
+            handleDropDownChange={handleDropDownChange}
           />
         </div>
         <DialogActions>

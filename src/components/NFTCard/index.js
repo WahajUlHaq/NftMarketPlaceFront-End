@@ -24,6 +24,11 @@ export default function CardComp(props) {
     itemUserId,
     isAvailableForSale,
     onWithdrawClick,
+    isItemForAuction,
+    onEndAuction,
+    highestBid,
+    onBidClick,
+    checkMyBidClick
   } = props;
 
   return (
@@ -36,9 +41,14 @@ export default function CardComp(props) {
               <Typography gutterBottom variant="h5" component="h2">
                 {itemName}
               </Typography>
-              {itemPrice && (
+              {highestBid <= 0 && itemPrice && (
                 <Typography gutterBottom variant="h5" component="h2">
                   {itemPrice / 1000000000000000000} ETH
+                </Typography>
+              )}
+              {highestBid > 0 && itemPrice && (
+                <Typography gutterBottom variant="h5" component="h2">
+                  Highest Bid {highestBid / 1000000000000000000} ETH
                 </Typography>
               )}
               <Typography
@@ -64,16 +74,49 @@ export default function CardComp(props) {
                 Set NFT For Sale
               </Button>
             )}
-            {itemUserId === user.user._id && isAvailableForSale && (
-              <Button onClick={onWithdrawClick} size="small" color="primary">
-                Remove From Market
-              </Button>
-            )}
-            {itemUserId !== user.user._id && isAvailableForSale && (
-              <Button onClick={onBuyClick} size="small" color="primary">
-                Buy This NFT
-              </Button>
-            )}
+            {itemUserId === user.user._id &&
+              isAvailableForSale &&
+              !isItemForAuction && (
+                <Button onClick={onWithdrawClick} size="small" color="primary">
+                  Remove From Market
+                </Button>
+              )}
+            {itemUserId !== user.user._id &&
+              isAvailableForSale &&
+              !isItemForAuction && (
+                <Button onClick={onBuyClick} size="small" color="primary">
+                  Buy This NFT
+                </Button>
+              )}
+            {highestBid > 0 &&
+              itemUserId === user.user._id &&
+              isItemForAuction && (
+                <Button onClick={onEndAuction} size="small" color="primary">
+                  End Auction
+                </Button>
+              )}
+            {highestBid <= 0 &&
+              itemUserId === user.user._id &&
+              isAvailableForSale &&
+              isItemForAuction && (
+                <Button onClick={onWithdrawClick} size="small" color="primary">
+                  Remove From Market
+                </Button>
+              )}
+            {itemUserId !== user.user._id &&
+              isAvailableForSale &&
+              isItemForAuction && (
+                <Button onClick={onBidClick} size="small" color="primary">
+                  Bid
+                </Button>
+              )}
+            {itemUserId !== user.user._id &&
+              isAvailableForSale &&
+              isItemForAuction && (
+                <Button onClick={checkMyBidClick} size="small" color="primary">
+                  My Bid
+                </Button>
+              )}
           </CardActions>
         </Card>
       </MuiThemeProvider>
@@ -87,7 +130,7 @@ const useStyles = makeStyles({
     display: "flex",
   },
   cont: {
-    height: 470,
+    height: 480,
     width: 300,
     marginTop: 30,
     marginRight: 30,
@@ -103,7 +146,7 @@ const useStyles = makeStyles({
     marginTop: 10,
   },
   description: {
-    height: 100,
+    height: 60,
     width: 280,
     overflowY: "auto",
   },
